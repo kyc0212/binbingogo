@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>大學生沒事好無聊所以把朋友當遊戲</title>
+  <style>
+    :root{
+      --bg: #f4efe7;
+      --paper: #efe6d8;
+      --card: #e5d6bf;
+      --line: #7b6652;
+      --text: #2f261f;
+      --muted: #6d5d4f;
+      --accent: #4e3f34;
+      --accent-2: #8a735c;
+      --mark: #4a3b31;
+      --mark-text: #f8f3ea;
+      --shadow: 0 10px 30px rgba(54, 41, 29, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body{
+      margin:0;
+      font-family:
+        "Noto Serif TC",
+        "PMingLiU",
+        "MingLiU",
+        "Songti TC",
+        "STSong",
+        serif;
+      background:
+        radial-gradient(circle at top, #fbf8f2 0%, var(--bg) 45%, #ece2d2 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px 40px;
+    }
+
+    .wrap{
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .tiny-title{
+      text-align: center;
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      opacity: 0.9;
+    }
+
+    .panel{
+      background: rgba(255,255,255,0.38);
+      border: 1px solid rgba(123,102,82,0.25);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(6px);
+      overflow: hidden;
+    }
+
+    .top{
+      padding: 24px 20px 18px;
+      background:
+        linear-gradient(180deg, rgba(239,230,216,0.95), rgba(229,214,191,0.88));
+      border-bottom: 1px solid rgba(123,102,82,0.18);
+    }
+
+    .top h1{
+      margin: 0 0 10px;
+      font-size: clamp(24px, 4vw, 36px);
+      line-height: 1.2;
+      text-align: center;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .top p{
+      margin: 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .content{
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .card{
+      background: rgba(255, 251, 244, 0.8);
+      border: 1px solid rgba(123,102,82,0.18);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .card h2{
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent);
+    }
+
+    .field{
+      margin-bottom: 12px;
+    }
+
+    .field label{
+      display: block;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: var(--muted);
+    }
+
+    input[type="text"], textarea{
+      width: 100%;
+      border: 1px solid rgba(123,102,82,0.3);
+      background: #fffdf8;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 15px;
+      color: var(--text);
+      font-family: inherit;
+      outline: none;
+    }
+
+    input[type="text"]:focus, textarea:focus{
+      border-color: var(--accent-2);
+      box-shadow: 0 0 0 3px rgba(138,115,92,0.12);
+    }
+
+    textarea{
+      resize: vertical;
+      min-height: 180px;
+      line-height: 1.6;
+    }
+
+    .hint{
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .btn-row{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button{
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .btn-primary{
+      background: var(--accent);
+      color: #fffaf2;
+    }
+
+    .btn-primary:hover{
+      transform: translateY(-1px);
+      background: #3f332a;
+    }
+
+    .btn-secondary{
+      background: #d9c8b2;
+      color: var(--text);
+    }
+
+    .btn-secondary:hover{
+      transform: translateY(-1px);
+      background: #cfbda7;
+    }
+
+    .board-card{
+      position: relative;
+      padding: 18px;
+    }
+
+    .board-title{
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .board-title .label{
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .board-title .topic{
+      font-size: clamp(22px, 3vw, 30px);
+      color: var(--accent);
+      word-break: break-word;
+      min-height: 1.4em;
+    }
+
+    .board-wrap{
+      position: relative;
+      width: min(78vw, 520px);
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+    }
+
+    .board{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 10px;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      z-index: 2;
+    }
+
+    .cell{
+      border-radius: 16px;
+      border: 1.5px solid rgba(123,102,82,0.25);
+      background:
+        linear-gradient(180deg, #fffaf1, #f3eadc);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 10px;
+      font-size: clamp(15px, 1.8vw, 22px);
+      line-height: 1.45;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+    }
+
+    .cell:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(60,40,25,0.08);
+    }
+
+    .cell.marked{
+      background:
+        linear-gradient(180deg, #5a493d, var(--mark));
+      color: var(--mark-text);
+      border-color: rgba(60, 46, 36, 0.6);
+    }
+
+    .line-layer{
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .line{
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 86%;
+      height: 8px;
+      background: rgba(123, 23, 23, 0.9);
+      border-radius: 999px;
+      transform-origin: center center;
+      box-shadow: 0 2px 8px rgba(90, 10, 10, 0.22);
+    }
+
+    .status{
+      margin-top: 14px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      min-height: 1.5em;
+    }
+
+    .footer-note{
+      margin-top: 10px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 860px){
+      .content{
+        grid-template-columns: 1fr;
+      }
+
+      .board-wrap{
+        width: min(92vw, 520px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="tiny-title">大學生沒事好無聊所以把朋友當遊戲</div>
+
+    <div class="panel">
+      <div class="top">
+        <h1>朋友 Bingo</h1>
+        <p>先輸入主題與 9 格內容，再開始玩。點格子就能標記，連成一線會自動顯示。</p>
+      </div>
+
+      <div class="content">
+        <section class="card">
+          <h2>設定區</h2>
+
+          <div class="field">
+            <label for="topicInput">主題</label>
+            <input id="topicInput" type="text" placeholder="例如：我的朋友特徵、班上同學觀察、今日荒謬事件" />
+          </div>
+
+          <div class="field">
+            <label for="bulkInput">9 格內容</label>
+            <textarea id="bulkInput" placeholder="請一行輸入一格，共 9 行&#10;例如：&#10;有瀏海&#10;今天遲到&#10;喜歡喝飲料&#10;..."></textarea>
+            <div class="hint">一行一格，沒填滿的格子會自動補上空白。</div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn-primary" id="applyBtn">開始遊戲</button>
+            <button class="btn-secondary" id="resetMarksBtn">清除記號</button>
+            <button class="btn-secondary" id="demoBtn">自動帶入範例</button>
+          </div>
+        </section>
+
+        <section class="card board-card">
+          <div class="board-title">
+            <div class="label">主題</div>
+            <div class="topic" id="boardTopic">未命名主題</div>
+          </div>
+
+          <div class="board-wrap" id="boardWrap">
+            <div class="board" id="board"></div>
+            <div class="line-layer" id="lineLayer"></div>
+          </div>
+
+          <div class="status" id="statusText">目前尚未連線。</div>
+          <div class="footer-note">提示：點一下格子即可標記，再點一次可取消。</div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const board = document.getElementById('board');
+    const lineLayer = document.getElementById('lineLayer');
+    const topicInput = document.getElementById('topicInput');
+    const bulkInput = document.getElementById('bulkInput');
+    const boardTopic = document.getElementById('boardTopic');
+    const statusText = document.getElementById('statusText');
+
+    const applyBtn = document.getElementById('applyBtn');
+    const resetMarksBtn = document.getElementById('resetMarksBtn');
+    const demoBtn = document.getElementById('demoBtn');
+
+    const size = 3;
+    let cells = [];
+
+    const winningLines = [
+      [0,1,2],
+      [3,4,5],
+      [6,7,8],
+      [0,3,6],
+      [1,4,7],
+      [2,5,8],
+      [0,4,8],
+      [2,4,6]
+    ];
+
+    function buildBoard(contents = []) {
+      board.innerHTML = '';
+      lineLayer.innerHTML = '';
+      cells = [];
+
+      for (let i = 0; i < size * size; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.index = i;
+        cell.textContent = contents[i] || `第 ${i + 1} 格`;
+
+        cell.addEventListener('click', () => {
+          cell.classList.toggle('marked');
+          updateLines();
+        });
+
+        board.appendChild(cell);
+        cells.push(cell);
+      }
+
+      updateLines();
+    }
+
+    function getCenter(index) {
+      const row = Math.floor(index / size);
+      const col = index % size;
+      const cellSize = 100 / size;
+      return {
+        x: col * cellSize + cellSize / 2,
+        y: row * cellSize + cellSize / 2
+      };
+    }
+
+    function drawLine(startIndex, endIndex) {
+      const start = getCenter(startIndex);
+      const end = getCenter(endIndex);
+
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+      const centerX = (start.x + end.x) / 2;
+      const centerY = (start.y + end.y) / 2;
+
+      const line = document.createElement('div');
+      line.className = 'line';
+      line.style.width = `${length}%`;
+      line.style.left = `${centerX}%`;
+      line.style.top = `${centerY}%`;
+      line.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+
+      lineLayer.appendChild(line);
+    }
+
+    function updateLines() {
+      lineLayer.innerHTML = '';
+      let count = 0;
+
+      winningLines.forEach(line => {
+        const allMarked = line.every(index => cells[index]?.classList.contains('marked'));
+        if (allMarked) {
+          drawLine(line[0], line[2]);
+          count++;
+        }
+      });
+
+      if (count === 0) {
+        statusText.textContent = '目前尚未連線。';
+      } else {
+        statusText.textContent = `目前完成 ${count} 條連線。`;
+      }
+    }
+
+    function applyContent() {
+      const topic = topicInput.value.trim() || '未命名主題';
+      boardTopic.textContent = topic;
+
+      const lines = bulkInput.value
+        .split('\n')
+        .map(s => s.trim())
+        .filter((_, index, arr) => true);
+
+      const normalized = [];
+      for (let i = 0; i < 9; i++) {
+        normalized.push(lines[i] ?? '');
+      }
+
+      buildBoard(normalized);
+    }
+
+    function clearMarks() {
+      cells.forEach(cell => cell.classList.remove('marked'));
+      updateLines();
+    }
+
+    function fillDemo() {
+      topicInput.value = '今天朋友的迷惑行為';
+      bulkInput.value = [
+        '出門前說五分鐘結果半小時',
+        '手機剩 2% 還超淡定',
+        '說不餓結果搶我東西吃',
+        '一直說隨便但每個都否決',
+        '訊息已讀但人蒸發',
+        '口頭說早睡半夜還在線',
+        '看到貓直接失去理智',
+        '自己忘記帶東西怪地心引力',
+        '拍照先管瀏海不是表情'
+      ].join('\n');
+      applyContent();
+    }
+
+    applyBtn.addEventListener('click', applyContent);
+    resetMarksBtn.addEventListener('click', clearMarks);
+    demoBtn.addEventListener('click', fillDemo);
+
+    buildBoard([
+      '第 1 格','第 2 格','第 3 格',
+      '第 4 格','第 5 格','第 6 格',
+      '第 7 格','第 8 格','第 9 格'
+    ]);
+  </script>
+</body>
+</html>
