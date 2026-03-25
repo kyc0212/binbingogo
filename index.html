@@ -8,21 +8,18 @@
     :root{
       --bg: #0f2b52;
       --bg-2: #163867;
-      --panel: #173560;
       --navy: #16345f;
       --navy-deep: #0c2343;
       --light-blue: #d6e4fb;
-      --cream: #fcfaf4;
-      --cream-2: #f8f5ee;
+      --cream: #fdfcf8;
+      --cream-2: #fbfaf6;
       --gold: #d5b067;
       --gold-soft: #cfa65a;
       --wine: #8f1f33;
       --wine-2: #a8283e;
       --line: rgba(255,255,255,0.08);
-      --cell-border: #d9ccb2;
+      --cell-border: #ddd2bb;
       --text: #f7f3eb;
-      --text-dark: #16345f;
-      --muted: rgba(255,255,255,0.72);
       --shadow: 0 18px 40px rgba(5, 14, 28, 0.35);
     }
 
@@ -262,7 +259,7 @@
       font-size: 14px;
       font-weight: 800;
       cursor: pointer;
-      transition: transform 0.15s ease, opacity 0.15s ease, background 0.2s ease;
+      transition: transform 0.15s ease, background 0.2s ease;
     }
 
     button:hover{
@@ -364,7 +361,7 @@
           <div class="topic-underline"></div>
         </div>
 
-        <div class="board-wrap" id="boardWrap">
+        <div class="board-wrap">
           <div class="board" id="board"></div>
           <div class="line-layer" id="lineLayer"></div>
         </div>
@@ -379,16 +376,21 @@
   </div>
 
   <script>
+    const STORAGE_KEY = "friend-bingo-local-v1";
+
     const board = document.getElementById('board');
     const lineLayer = document.getElementById('lineLayer');
     const markModeBtn = document.getElementById('markModeBtn');
     const clearMarksBtn = document.getElementById('clearMarksBtn');
     const clearTextBtn = document.getElementById('clearTextBtn');
+    const nameInput = document.getElementById('nameInput');
+    const topicInput = document.getElementById('topicInput');
 
     const size = 3;
     const total = size * size;
     let markMode = false;
     let cellElements = [];
+    let editorElements = [];
 
     const winningLines = [
       [0, 1, 2],
@@ -401,9 +403,55 @@
       [2, 4, 6]
     ];
 
+    function getDefaultState() {
+      return {
+        name: "",
+        topic: "",
+        markMode: false,
+        cells: Array.from({ length: total }, () => ({
+          text: "",
+          marked: false
+        }))
+      };
+    }
+
+    function saveState() {
+      const state = {
+        name: nameInput.value || "",
+        topic: topicInput.value || "",
+        markMode,
+        cells: cellElements.map((cell, index) => ({
+          text: (editorElements[index]?.innerText || "").replace(/\n{3,}/g, "\n\n").trim(),
+          marked: cell.classList.contains("marked")
+        }))
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return getDefaultState();
+        const parsed = JSON.parse(raw);
+
+        return {
+          name: parsed.name || "",
+          topic: parsed.topic || "",
+          markMode: !!parsed.markMode,
+          cells: Array.from({ length: total }, (_, i) => ({
+            text: parsed.cells?.[i]?.text || "",
+            marked: !!parsed.cells?.[i]?.marked
+          }))
+        };
+      } catch (e) {
+        return getDefaultState();
+      }
+    }
+
     function buildBoard() {
       board.innerHTML = '';
       cellElements = [];
+      editorElements = [];
 
       for (let i = 0; i < total; i++) {
         const cell = document.createElement('div');
@@ -428,6 +476,7 @@
           }
           cell.classList.toggle('marked');
           drawWinningLines();
+          saveState();
         });
 
         editor.addEventListener('focus', () => {
@@ -436,6 +485,11 @@
 
         editor.addEventListener('blur', () => {
           cell.classList.remove('editing');
+          saveState();
+        });
+
+        editor.addEventListener('input', () => {
+          saveState();
         });
 
         editor.addEventListener('click', (e) => {
@@ -445,15 +499,31 @@
         editor.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
-            document.execCommand('insertLineBreak');
+            insertLineBreak();
+            saveState();
           }
         });
 
         cell.appendChild(editor);
         cell.appendChild(toggle);
         board.appendChild(cell);
+
         cellElements.push(cell);
+        editorElements.push(editor);
       }
+    }
+
+    function insertLineBreak() {
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return;
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const br = document.createElement("br");
+      range.insertNode(br);
+      range.setStartAfter(br);
+      range.setEndAfter(br);
+      sel.removeAllRanges();
+      sel.addRange(range);
     }
 
     function placeCaretAtEnd(el) {
@@ -512,31 +582,55 @@
     function clearMarks() {
       cellElements.forEach(cell => cell.classList.remove('marked'));
       drawWinningLines();
+      saveState();
     }
 
     function clearTexts() {
-      document.querySelectorAll('.cell-editor').forEach(editor => {
+      editorElements.forEach(editor => {
         editor.innerHTML = '';
       });
-      document.getElementById('nameInput').value = '';
-      document.getElementById('topicInput').value = '';
+      nameInput.value = '';
+      topicInput.value = '';
       clearMarks();
+      saveState();
     }
 
     function updateMarkModeButton() {
       markModeBtn.textContent = markMode ? '目前：標記模式' : '目前：輸入模式';
     }
 
+    function applyState(state) {
+      nameInput.value = state.name || "";
+      topicInput.value = state.topic || "";
+      markMode = !!state.markMode;
+      updateMarkModeButton();
+
+      state.cells.forEach((item, index) => {
+        if (editorElements[index]) {
+          editorElements[index].innerText = item.text || "";
+        }
+        if (cellElements[index]) {
+          cellElements[index].classList.toggle("marked", !!item.marked);
+        }
+      });
+
+      drawWinningLines();
+    }
+
     markModeBtn.addEventListener('click', () => {
       markMode = !markMode;
       updateMarkModeButton();
+      saveState();
     });
 
     clearMarksBtn.addEventListener('click', clearMarks);
     clearTextBtn.addEventListener('click', clearTexts);
 
+    nameInput.addEventListener('input', saveState);
+    topicInput.addEventListener('input', saveState);
+
     buildBoard();
-    updateMarkModeButton();
+    applyState(loadState());
   </script>
 </body>
 </html>
