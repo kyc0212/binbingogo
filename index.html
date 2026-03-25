@@ -6,22 +6,22 @@
   <title>朋友 Bingo</title>
   <style>
     :root{
-      --bg: #10294d;
-      --bg-2: #173766;
-      --panel: #16335d;
-      --navy: #17345f;
-      --navy-deep: #0d2343;
-      --light-blue: #c8d9f2;
-      --cream: #f6f0e4;
-      --cream-2: #efe5d1;
-      --gold: #d4b06a;
-      --gold-soft: #c9a156;
-      --wine: #8d1f32;
-      --wine-2: #a9273d;
+      --bg: #0f2b52;
+      --bg-2: #163867;
+      --panel: #173560;
+      --navy: #16345f;
+      --navy-deep: #0c2343;
+      --light-blue: #d6e4fb;
+      --cream: #fcfaf4;
+      --cream-2: #f8f5ee;
+      --gold: #d5b067;
+      --gold-soft: #cfa65a;
+      --wine: #8f1f33;
+      --wine-2: #a8283e;
       --line: rgba(255,255,255,0.08);
-      --cell-border: #d7c7a7;
+      --cell-border: #d9ccb2;
       --text: #f7f3eb;
-      --text-dark: #16335d;
+      --text-dark: #16345f;
       --muted: rgba(255,255,255,0.72);
       --shadow: 0 18px 40px rgba(5, 14, 28, 0.35);
     }
@@ -40,8 +40,7 @@
         "PMingLiU",
         "MingLiU",
         serif;
-      background:
-        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
       color: var(--text);
     }
 
@@ -108,7 +107,7 @@
     }
 
     .name-input::placeholder{
-      color: rgba(255,255,255,0.28);
+      color: rgba(255,255,255,0.24);
     }
 
     .topic-wrap{
@@ -140,7 +139,14 @@
       width: 100%;
       height: 3px;
       border-radius: 999px;
-      background: linear-gradient(90deg, transparent 0%, var(--gold) 12%, var(--gold-soft) 50%, var(--gold) 88%, transparent 100%);
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--gold) 12%,
+        var(--gold-soft) 50%,
+        var(--gold) 88%,
+        transparent 100%
+      );
       box-shadow: 0 0 10px rgba(212,176,106,0.28);
     }
 
@@ -171,43 +177,42 @@
       transition: 0.2s ease;
       min-width: 0;
       min-height: 0;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.72);
     }
 
     .cell.marked{
-      background: linear-gradient(180deg, #cbb183 0%, #b89458 100%);
+      background: linear-gradient(180deg, #d7bd8f 0%, #c39b5d 100%);
       border-color: var(--gold);
       box-shadow: 0 10px 22px rgba(212,176,106,0.18);
     }
 
-    .cell-input{
-      width: 100%;
-      height: 100%;
-      border: none;
-      outline: none;
-      resize: none;
-      background: transparent;
-      color: var(--navy);
-      font-family: inherit;
-      font-size: clamp(16px, 2.5vw, 24px);
-      font-weight: 900;
-      line-height: 1.25;
-      text-align: center;
-      padding: 12px 10px;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-      overflow: hidden;
+    .cell-editor{
+      position: absolute;
+      inset: 0;
+      z-index: 1;
       display: flex;
       align-items: center;
       justify-content: center;
+      text-align: center;
+      padding: 12px 10px;
+      color: var(--navy);
+      font-size: clamp(16px, 2.5vw, 24px);
+      font-weight: 900;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      white-space: pre-wrap;
+      overflow: hidden;
+      outline: none;
+      font-family: inherit;
     }
 
-    .cell.marked .cell-input{
+    .cell.marked .cell-editor{
       color: var(--navy-deep);
     }
 
-    .cell-input::placeholder{
-      color: rgba(23,52,95,0.25);
+    .cell-editor:empty::before{
+      content: "";
     }
 
     .cell-toggle{
@@ -312,7 +317,7 @@
         border-radius: 16px;
       }
 
-      .cell-input{
+      .cell-editor{
         padding: 10px 8px;
         font-size: clamp(15px, 3.8vw, 18px);
       }
@@ -404,10 +409,10 @@
         const cell = document.createElement('div');
         cell.className = 'cell';
 
-        const input = document.createElement('textarea');
-        input.className = 'cell-input';
-        input.rows = 1;
-        input.placeholder = '';
+        const editor = document.createElement('div');
+        editor.className = 'cell-editor';
+        editor.contentEditable = 'true';
+        editor.setAttribute('spellcheck', 'false');
 
         const toggle = document.createElement('button');
         toggle.className = 'cell-toggle';
@@ -417,30 +422,47 @@
         toggle.addEventListener('click', () => {
           if (!markMode) {
             cell.classList.add('editing');
-            input.focus();
+            editor.focus();
+            placeCaretAtEnd(editor);
             return;
           }
           cell.classList.toggle('marked');
           drawWinningLines();
         });
 
-        input.addEventListener('focus', () => {
+        editor.addEventListener('focus', () => {
           cell.classList.add('editing');
         });
 
-        input.addEventListener('blur', () => {
+        editor.addEventListener('blur', () => {
           cell.classList.remove('editing');
         });
 
-        input.addEventListener('click', (e) => {
+        editor.addEventListener('click', (e) => {
           if (markMode) e.stopPropagation();
         });
 
-        cell.appendChild(input);
+        editor.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            document.execCommand('insertLineBreak');
+          }
+        });
+
+        cell.appendChild(editor);
         cell.appendChild(toggle);
         board.appendChild(cell);
         cellElements.push(cell);
       }
+    }
+
+    function placeCaretAtEnd(el) {
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
     }
 
     function getCenter(index) {
@@ -493,8 +515,8 @@
     }
 
     function clearTexts() {
-      document.querySelectorAll('.cell-input').forEach(input => {
-        input.value = '';
+      document.querySelectorAll('.cell-editor').forEach(editor => {
+        editor.innerHTML = '';
       });
       document.getElementById('nameInput').value = '';
       document.getElementById('topicInput').value = '';
